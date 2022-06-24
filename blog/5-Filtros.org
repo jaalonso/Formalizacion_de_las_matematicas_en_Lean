@@ -1,0 +1,152 @@
+#+TITLE: 5ª clase de "Formalización de las matemáticas": Filtros
+
+La palabra "filtro" significa diferentes cosas para diferentes personas; solo
+para aclarar, esta semana aprenderemos sobre la noción matemática de un [[https://en.wikipedia.org/wiki/Filter_(mathematics)#Filter_on_a_set][filtro
+en un conjunto]]. He [[https://xenaproject.wordpress.com/2018/08/04/what-is-a-filter-how-some-computer-scientists-think-about-limits/][escrito sobre estos filtros antes]], pero desde entonces me las
+arreglé para comprender mucho mejor cómo pensar en los filtros, y espero que
+esto se vea aquí. Cuando escribí esa publicación en 2018, sabía que los filtros
+eran "algo que tiene que ver con los límites", pero ahora me doy cuenta de que
+esto está mal. Se utilizan para hablar de límites, pero lo que es un filtro en
+sí mismo es simplemente una generalización de un subconjunto de un conjunto.
+
+* ¿Qué es un filtro?
+
+Sea \(X\) un tipo; es decir, lo que la mayoría de los matemáticos llaman
+conjunto. Luego \(X\) tiene subconjuntos, y la colección de todos los subconjuntos
+de $X$ tiene algunas propiedades realmente agradables: puede tomar uniones e
+intersecciones arbitrarias, por ejemplo, y si se ordena los subconjuntos de
+\(X\) por inclusión, entonces estas construcciones se pueden considerar como
+supremos e ínfimos y satisfacen un conjunto de axiomas que uno podría esperar
+que satisfagan los supremos e ínfimos; por ejemplo, si \(X_i ⊂ Y\) para todo \(i
+∈ I\), entonces \(⋃_i X_i ⊆ Y\). En resumen, los subconjuntos de un conjunto
+forman lo que se conoce en la teoría del orden como un retículo completo.
+
+Se puede pensar en un filtro como una especie de subconjunto generalizado de
+\(X\). Cada subconjunto \(S\) de \(X\) da lugar a un filtro de \(X\), llamado
+filtro principal asociado a \(S\) y denotado por \(𝓟 S\). Tenemos \(𝓟 S = 𝓟 T\)
+si y solo si \(S = T\). Sin embargo, si \(X\) es infinito, hay otros filtros
+\(F\) no principales de \(X\), que son objetos un poco más vagos. Sin embargo,
+los filtros tienen un orden escrito \(F ≤ G\), y es cierto que
+\(S ⊆ T ↔ 𝓟 S ≤ 𝓟 T\) (de hecho, lo demostraremos hoy). Para dar un ejemplo de
+un filtro que no es principal, sea \(X\) los números reales. Para cada número
+real \(x\) hay un filtro \(𝓝 x\), llamado filtro de entornos de x, con la
+propiedad de que si \(U\) es cualquier subconjunto abierto de \(ℝ\)
+que contiene a \(x\), entonces \(𝓟 {x} < 𝓝 x < 𝓟 U\). En otras palabras, es
+una especie de "entorno infinitesimal de \(x)", estrictamente más grande que
+\({x}\) pero estrictamente más pequeño que cada entorno abierto de \(x\). Este
+es un concepto que no se puede formalizar solo con conjuntos, sino que se puede
+formalizar mediante filtros.
+
+* La definición formal de un filtro
+
+Déjame motivar la definición antes de darla. Sea \(F\) un filtro. Definamos
+=F.sets= como los subconjuntos de \(X\) que contienen F; es decir, los \(S\)
+tales que \(F ≤ 𝓟 S\). Aquí hay una propiedad de los filtros que aún no he
+mencionado: si dos filtros \(F\) y \(G\) satisfacen ~F.sets = G.sets~ entonces
+\(F = G\); en otras palabras, un filtro está determinado por los filtros
+principales que lo contienen. Esto motiva la siguiente definición: ¿por qué no
+definir un filtro \(F\) como el conjunto de subconjuntos de \(X\) que lo
+contienen?  Necesitaremos algunos axiomas: ¿cuáles son los axiomas razonables?
+No queremos que un filtro sea más grande que \(X\) y queremos asegurarnos de que
+si \(S\) contiene a \(F\), entonces \(T\) contiene a \(F\) para cualquier \(T ⊇
+S\); finalmente, si ambos \(S\) y \(T\) contienen $F$ entonces queremos que $S ∩
+T$ contenenga a $F$. ¡Esa es la definición de filtro!
+
+#+begin_src lean
+structure filter (α : Type*) :=
+(sets                   : set (set α))
+(univ_sets              : set.univ ∈ sets)
+(sets_of_superset {x y} : x ∈ sets → x ⊆ y → y ∈ sets)
+(inter_sets {x y}       : x ∈ sets → y ∈ sets → x ∩ y ∈ sets)
+#+end_src
+
+Un filtro en $X$, o, como Lean le gustaría llamarlo, un término ~F : filter X~
+de tipo ~filter X~, es una colección ~F.sets~ de subconjuntos de $X$ que
+satisfacen los tres axiomas mencionados anteriormente. Eso es, desentrañando las
+definiciones, vemos que una definición sensata de $F ≤ G$ es ~G.sets ⊆ F.sets~,
+porque queremos $G ⊆ S$ implica $F ⊆ S$.
+
+Probablemente finalmente valga la pena mencionar que en Bourbaki, donde se
+introdujo este concepto por primera vez, tienen un axioma adicional en sus
+filtros: no permiten que $𝓟 ∅$ sea un filtro (el conjunto vacío no es un
+conjunto generalizado). En esta óptica, esto parece una decisión muy extraña, y
+este axioma adicional se eliminó en Lean. De hecho, bendecimos a $𝓟 ∅$ con un
+nombre especial: es $⊥$, el único filtro más pequeño bajo nuestro orden $≤$. La
+(pequeña) ventaja de la convención de Bourbaki es que un ultrafiltro puede
+definirse literalmente como un elemento mínimo en el tipo de todos los filtros,
+en lugar de un elemento mínimo en el tipo de todos los filtros excepto $⊥$. Esto
+sería análogo a no permitir un anillo $R$ ser un ideal en sí mismo, por lo que
+uno puede definir los ideales máximos de un anillo como los elementos máximos en
+el conjunto de todos los ideales del anillo. Sin embargo, esta convención para
+los ideales rompería enormemente la funcionalidad de los ideales, por ejemplo,
+la imagen de un ideal a lo largo de un homomorfismo de anillo podría dejar de
+ser un ideal, la suma de dos ideales podría no ser un ideal, y así
+sucesivamente. De manera similar, permitimos que $⊥$ sea un filtro en Lean,
+porque nos permite tomar la intersección de filtros, tirar de los filtros hacia
+atrás y así sucesivamente; da una definición mucho más funcional.
+
+* ¿Qué hay en el taller de hoy?
+
+El material de esta semana está en la [[https://github.com/ImperialCollegeLondon/formalising-mathematics/tree/master/src/week_5][semana_5]] del [[https://github.com/ImperialCollegeLondon/formalising-mathematics][repositorio de GitHub de
+formalización de las matemáticas]] que puede descargar localmente si se tiene
+~leanproject~ instalado o, si tiene la paciencia de un santo y no le importa
+perderse algunas de las campanas y silbidos, puede probar en línea ([[https://leanprover-community.github.io/lean-web-editor/#url=https%3A%2F%2Fraw.githubusercontent.com%2FImperialCollegeLondon%2Fformalising-mathematics%2Fmaster%2Fsrc%2Fweek_5%2FPart_A_filters.lean][Parte A]] y
+[[https://leanprover-community.github.io/lean-web-editor/#url=https%3A%2F%2Fraw.githubusercontent.com%2FImperialCollegeLondon%2Fformalising-mathematics%2Fmaster%2Fsrc%2Fweek_5%2FPart_B_topology.lean][Parte B]]). Nota: toda esta infraestructura no apareció simplemente por arte de
+magia, escribí el código en el repositorio, pero no tuve nada que ver con todos
+estos otros trucos para facilitar el uso de los matemáticos; tenemos mucho que
+agradecer a personas como Patrick Massot y Bryan Gin-ge Chen por ello.
+
+En la Parte A comenzamos definiendo filtros principales y creamos una API básica
+para ellos. Doy un par de ejemplos de filtros también; por ejemplo, el filtro
+cofinito $C$ sobre $X$, formado por todos los subconjuntos de $X$ cuyo
+complemento es finito. Vale la pena detenerse en este filtro. Corresponde a un
+al subconjunto genérico de $X$ de "todos los elementos de excepto quizás un
+número finito", quizás análogo a un punto genérico en geometría algebraica. Sin
+embargo, no existe ningún elemento $a$ de $X$ tal que $𝓟 {a} ≤ C$, porque $X -
+{a}$ es un subconjunto de cofinitos que no contiene $a$. En particular, volviendo
+a pensar en los filtros como subconjuntos generalizados, observamos que mientras
+que un conjunto generalizado está determinado por los conjuntos que lo
+contienen, definitivamente no está determinado por los conjuntos que contiene:
+de hecho, $C$ no contiene conjuntos no vacíos en absoluto.
+
+En la Parte B pasamos a hacer algo de topología. Definimos filtros de entornos y
+puntos de acumulación, y luego hablamos de una definición de compacidad que no
+involucra conjuntos abiertos en absoluto, sino que involucra filtros. Todavía
+estoy tratando de internalizar esta definición, que es la siguiente:
+
+#+begin_src lean
+def is_compact (S : set X) := ∀ ⦃F⦄ [ne_bot F], F ≤ 𝓟 S → ∃ a  ∈ S, cluster_pt a F
+#+end_src
+
+En palabras, un subconjunto $S$ de un espacio topológico es compacto si cada
+subconjunto generalizado no vacío $F$ de $S$ tiene un punto de acumulación $a$
+en $S$.
+
+Pensemos en el siguiente ejemplo. Sea $S = X$. Sea $S$ un espacio topológico
+discreto infinito. Entonces, el filtro de cofinitos es un filtro de $S$ que no
+tiene ningún punto de acumulación, lo que significa que un espacio topológico
+discreto infinito no es compacto. Similarmente imagine que $S$ es el intervalo
+semiabierto $(0,1)$. Entonces el filtro de entornos de cero en $ℝ$, restringido
+a este subconjunto (es decir, simplemente interseca todos los conjuntos en el
+filtro con $(0,1)$), nuevamente no tiene puntos de acumulación, por lo que este
+espacio tampoco es compacto. Finalmente consideremos a $ℝ$. Entonces, el ~t_top~
+filtro, en el que pensaremos en la Parte A, consta de todos los subconjuntos $T$
+de $ℝ$ para los que existe alguno $r ∈ ℝ$ tal que $(r, ∞) ⊆ T$. Este "entorno de
+$+∞$" no tiene puntos de acumulación en $ℝ$ (tenga en cuenta que $+∞$ sería un
+punto de acumulación, pero no es un número real). Por tanto, $ℝ$ tampoco es
+compacto. Ciertamente, no hemos probado aquí que esta definición de compacto sea
+matemáticamente equivalente a la habitual; pero lo es y si está interesado y ha
+aprendido el lenguaje de Lean, puede ir y leer la prueba usted mismo en
+biblioteca de matemáticas de Lean.
+
+El objetivo de esta semana es, nuevamente, demostrar que un subespacio cerrado
+de un espacio compacto es compacto. Pero esta vez lo probamos con filtros. Como
+la última vez, probamos algo un poco más general: si $X$ es cualquier espacio
+topológico, $S$ es un subconjunto compacto y $C$ es un subconjunto cerrado,
+entonces $S ∩ C$ es compacto. Esta es la prueba. Sea $F$ un subconjunto
+generalizado no vacío (es decir, un filtro) contenido en $S ∩ C$. Por compacidad
+de $S$, $F$ tiene un punto de acumulación $a$ en $S$. Pero $F$ está contenido en
+$C$, por lo que todos los puntos de aacumulación de $F$ son puntos de
+acumulación de $C$, y los puntos de acumulación de $C$ son solo el cierre de
+$C$, que es de $C$. De ahí, $a$ es el elemento de $S ∩ C$ que buscamos. Sin
+recubrimientos ni subrecubrimientos finitos.

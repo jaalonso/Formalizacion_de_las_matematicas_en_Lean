@@ -1,0 +1,47 @@
+#+TITLE: Formalización de las matemáticas en Lean
+ 
+Este repositorio es una adaptación del de Kevin Buzzard [[https://github.com/ImperialCollegeLondon/formalising-mathematics][formalising-mathematics]]
+
+* Matemáticas básicas
+
++ [[./src/1_Basica/1_Logica.lean][Lógica]].
++ [[./src/1_Basica/2_Conjuntos.lean][Conjuntos]].
++ [[./src/1_Basica/3_Funciones.lean][Funciones]].
++ [[./src/1_Basica/4_Relaciones.lean][Relaciones]].
+
+* Grupos y subgrupos
+
++ [[./src/2_Grupos_y_subgrupos/Grupos.lean][Grupos]].
++ [[./src/2_Grupos_y_subgrupos/Subgrupos.lean][Subgrupos]].
+
+* Límites
+
++ [[./src/3_Limites/Limites_de_sucesiones.lean][Límites de sucesiones]].
++ [[./src/3_Limites/Limites_mediante_filtros.lean][Límites mediante filtros]].
+
+* Topología
+
++ [[./src/4_Topologia/Conjuntos.lean][Conjuntos]]
+#+INCLUDE: "./src/4_Topologia/Conjuntos.lean" src lean
+
++ [[./src/4_Topologia/Monada_opcional.lean][Mónada opcional]]
+#+INCLUDE: "./src/4_Topologia/Monada_opcional.lean" src lean
+
++ [[./src/4_Topologia/Topologia.lean][Topología]]
+#+INCLUDE: "./src/4_Topologia/Topologia.lean" src lean
+
+* Filtros
+
++ [[./src/5_Filtros/Filtros.lean][Filtros]]
+#+INCLUDE: "./src/5_Filtros/Filtros.lean" src lean
+
++ [[./src/5_Filtros/Filtros_y_topologia.lean][Filtros y topología]]
+#+INCLUDE: "./src/5_Filtros/Filtros_y_topologia.lean" src lean
+
+* Límites con filtros
+
++ [[./src/6_Limites_con_filtros/Limites_con_filtros.lean][Límites con filtros]]
+#+INCLUDE: "./src/6_Limites_con_filtros/Limites_con_filtros.lean" src lean
+
++ [[./src/6_Limites_con_filtros/Limites_de_sucesiones.lean][Límites de sucesiones]]
+#+INCLUDE: "./src/6_Limites_con_filtros/Limites_de_sucesiones.lean" src lean

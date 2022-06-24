@@ -1,0 +1,1064 @@
+-- Límites e sucesiones
+-- ====================
+
+-- Desarrollamos una teoría de límites de sucesiones a₀, a₁, a₂, ... de
+-- reales, siguiendo la forma en que tradicionalmente se hace en un
+-- primer año del grado de matemáticas.
+--
+-- Este fichero contiene la definición básica del límite de una
+-- sucesión, y demuestra propiedades básicas sobre el mismo.
+--
+-- La importación `data.real.basic` importa la definición y las
+-- propiedades de los números reales, incluyendo, por ejemplo, la
+-- función de valor absoluto `abs : ℝ → ℝ`, y la prueba de que `ℝ` es un
+-- cuerpo arquimediano completo totalmente ordenado.
+--
+-- Para obtener `ℝ` en Lean, escribimos `\R`.
+--
+-- Definimos el predicado `is_limit (a : ℕ → ℝ) (l : ℝ)` para significar
+-- que `aₙ → l` de la forma habitual:
+--    `∀ ε > 0, ∃ N, ∀ n ≥ N, | a n - l | < ε`.
+--
+-- A continuación desarrollamos la teoría básica de los límites.
+--
+-- Usaremos las siguientes variables
+--    variables (a b c : ℕ → ℝ) (c l m : ℝ)
+-- y los principales teoremas que demostraremos son
+-- + is_limit_const :
+--     is_limit (λ n, c) c
+-- + is_limit_subsingleton
+--     (hl : is_limit a l)
+--     (hm : is_limit a m)
+--     : l = m
+-- + is_limit_add
+--     (h1 : is_limit a l)
+--     (h2 : is_limit b m)
+--     : is_limit (a + b) (l + m)
+-- + is_limit_mul
+--     (h1 : is_limit a l)
+--     (h2 : is_limit b m)
+--     : is_limit (a * b) (l * m)
+-- + is_limit_le_of_le
+--     (hl : is_limit a l)
+--     (hm : is_limit b m)
+--     (hle : ∀ n, a n ≤ b n)
+--     : l ≤ m
+-- + sandwich
+--     (ha : is_limit a l)
+--     (hc : is_limit c l)
+--     (hab : ∀ n, a n ≤ b n)
+--     (hbc : ∀ n, b n ≤ c n)
+--     : is_limit b l
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Importar la librería de los números reales y de las
+-- tácticas.
+-- ---------------------------------------------------------------------
+
+import data.real.basic
+import tactic
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Crear una sesión con espacio de nombre `oculto`.
+-- ---------------------------------------------------------------------
+
+namespace oculto
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Declarar c como variable sobre los reales.
+-- ---------------------------------------------------------------------
+
+variable (c : ℝ)
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Definir la notación |x| para `abs x`
+-- ---------------------------------------------------------------------
+
+local notation `|` x `|` := abs x
+
+-- Nota. Las sucesiones de números reales a₀, a₁, a₂,... se representan
+-- mediante funciones a de ℕ a ℝ tal que a(n) = aₙ.
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Definir la función
+--    is_limit : (ℕ → ℝ) → ℝ → Prop
+-- tal que (is_limit a l) expresa que l es el límite de a.
+-- ---------------------------------------------------------------------
+
+definition is_limit : (ℕ → ℝ) → ℝ → Prop :=
+λ a l, ∀ ε > 0, ∃ N, ∀ n ≥ N, | a n - l | < ε
+
+-- Nota: Hay que tener en cuenta que `is_limit` no es una función
+-- (ℕ → ℝ) → ℝ. Es una relación binaria sobre (ℕ → ℝ) y ℝ; es decir, es
+-- una función que toma como entrada una secuencia y un límite
+-- candidato, y devuelve la declaración verdadero-falso diciendo que la
+-- secuencia converge al límite.
+--
+-- La razón por la que no podemos utilizar una función "límite", que
+-- toma una secuencia y devuelve su límite, es doble:
+-- (1) algunas secuencias (como 0, 1, 0, 1, 0, 1,...) no tienen límite, y
+-- (2) en este punto del desarrollo, algunas secuencias podrían tener en
+--     teoría más de un límite.
+
+-- Nota. La notación `λ n, f n` en Lean sólo significa lo que los
+-- matemáticos llamaríamos `f` o `f(n)`. Literalmente, significa "la
+-- función que envía `n` a `f n`, con la particularidad de que no es
+-- necesario escribir los paréntesis (aunque `λ n, f(n)` también
+-- funcionaría bien). Otra forma de reescribirlo de manera más familiar:
+-- `λ n, f n` es la función `n ↦ f n`. Así, por ejemplo, `λ n, 2 * n` es
+-- simplemente la función `f(x)=2*x`. A veces se llama "notación de
+-- función anónima" porque no necesitamos introducir un nombre para la
+-- función si utilizamos notación lambda.
+--
+-- Hay que conocer un truco al respecto. ¿Qué ocurre si tenemos una
+-- función definida por la notación lambda, y luego tratamos de
+-- ¡evaluarla! Tienes que saber cómo cambiar `(λ n, f n) (37)` en
+-- `f(37)` (o, como lo llamaría Lean, `f 37`). Los informáticos llaman a
+-- esta transformación "reducción beta". En Lean, la reducción beta es
+-- verdadera por definición, por lo que si se utiliza `apply` o `intro`
+-- u otras tácticas que funcionan hasta la igualdad por definición,
+-- entonces puede que no ni siquiera tiene que cambiarlo en
+-- absoluto. Pero si tu objetivo contiene una "λ evaluada" como `⊢ (λ n,
+-- f n) 37` y tienes una hipótesis `h1 : f 37 = 100` entonces `rw h1`
+-- fallará, porque `rw` es más exigente y sólo funciona hasta la
+-- igualdad sintáctica. Así que necesitas conocer el truco para cambiar
+-- este objetivo a `f 37`, que es la táctica `dsimp only`. También
+-- funciona con las hipótesis -- `dsimp only at h` eliminará una `λ`
+-- evaluada de la hipótesis `h`.
+--
+-- Ahora demostraremos que el límite de una secuencia constante `aₙ = c`
+-- es `c`. La definición de la sucesión constante es `λ n, c`, la
+-- función que envía cada `n` a `c`.
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que el límite de la función constante c es c.
+-- ---------------------------------------------------------------------
+
+-- 1ª demostración
+example :
+  is_limit (λ n, c) c :=
+begin
+  unfold is_limit,
+  intros ε hε,
+  use 0,
+  intros n hn,
+  dsimp,
+  simp,
+  exact hε,
+end
+
+-- 2ª demostración
+example :
+  is_limit (λ n, c) c :=
+begin
+  intros ε hε,
+  use 0,
+  rintro n -,
+  norm_num,
+  linarith,
+end
+
+-- 3ª demostración
+example :
+  is_limit (λ n, c) c :=
+begin
+  intros ε hε,
+  use 0,
+  rintro n -,
+  calc |(λ n, c) n - c|
+       = |c - c|  : rfl
+   ... = 0        : by norm_num
+   ... < ε        : hε
+end
+
+-- 4ª demostración
+lemma is_limit_const :
+  is_limit (λ n, c) c :=
+assume ε,
+assume hε : ε > 0,
+exists.intro 0
+  ( assume n,
+    assume hn : n ≥ 0,
+    show |(λ n, c) n - c| < ε, from
+      calc |(λ n, c) n - c|
+           = |c - c|  : rfl
+       ... = 0        : by norm_num
+       ... < ε        : hε)
+
+-- Nota. Voy a guiarte también por la siguiente prueba. Es una prueba
+-- de que si `aₙ → l` y `aₙ → m` entonces `l = m`. Así es como se
+-- expresa en Lean:
+--    theorem is_limit_subsingleton
+--      {a : ℕ → ℝ}
+--      {l m : ℝ}
+--      (hl : is_limit a l)
+--      (hm : is_limit a m)
+--      : l = m := ...
+--
+-- Antes de seguir con esta demostración, creo que es hora de que
+-- explique estos corchetes correctamente. ¿Cómo es que he escrito `{a :
+-- ℕ → ℝ}` y no `(a : ℕ → ℝ)`?
+--
+--
+-- `is_limit_subsingleton` es una prueba de que una secuencia puede
+-- tener como máximo un límite. También es una función. Aprender a
+-- pensar en las pruebas como funciones es una habilidad importante para
+-- demostrar los teoremas de este seminario. Así que vamos a hablar un
+-- poco sobre cómo una prueba puede ser una función.
+--
+-- En la teoría de tipos dependientes de Lean, hay tipos y términos, y
+-- cada término tiene un tipo único. Los tipos y los términos se usan
+-- para unificar dos ideas que los matemáticos suelen considerar
+-- completamente diferentes: la de conjuntos y elementos, y la de los
+-- teoremas y las pruebas. Veamos de cerca qué es exactamente esta
+-- función `is_limit_subsingleton`.
+--
+-- Veamos con más detalle `is_limit_subsingleton` (el teorema se enuncia
+-- más arriba). Es una función con cinco entradas. La primera entrada es
+-- una secuencia `a : ℕ → ℝ`. La segunda y tercera son números reales
+-- `l` y `m`. La cuarta entrada es una prueba de que `a(n)` tiende a
+-- `l`, y la quinta es una prueba de que `a(n)` tiende a `m`. La salida
+-- de la función (después de los dos puntos) es una prueba que "l =
+-- m". Así es como Lean piensa en las pruebas internamente, y es
+-- importante que interiorice este punto de vista porque tratará las
+-- pruebas como como funciones y las evaluará en las entradas para
+-- obtener otras pruebas. Bastante por hoy. Si todavía piensas que es un
+-- poco raro tener pruebas como entradas y salidas de funciones, piensa
+-- en una declaración verdadero-falso (por ejemplo, un teorema como un
+-- conjunto, y los elementos de ese conjunto son las pruebas del
+-- teorema. Por ejemplo, `2 + 2 = 5` es un conjunto sin elementos,
+-- porque no hay pruebas de este teorema (suponiendo que las matemáticas
+-- sean consistentes).
+--
+-- Ahora bien, si piensas en estas entradas cuidadosamente, y piensas en
+-- tu modelo mental de una función, puede que te des cuenta de que hay
+-- algo más un poco sospechoso que está ocurriendo aquí. Normalmente se
+-- piensa en una función con cinco entradas como una función de "A × B ×
+-- C × D × E" a "X", donde "A", "B", "C", "D" y "E" son todos
+-- conjuntos. Las tres primeras entradas `a` (del tipo `ℕ → ℝ`) y `l` y
+-- `m` (del tipo `ℝ`) no son conflictivas: basta con poner `A = ℕ → ℝ` y
+-- `B = C = ℝ`. Pero la cuarta entrada a `is_limit_singleton` es un elemento
+-- del conjunto de pruebas de `is_limit a l`, la afirmación de que
+-- `a(n)` tiende a `l`, y en particular este conjunto en sí mismo
+-- *depende de las dos primeras entradas*. El conjunto `D` es una
+-- función de `a` y `l` -- las propias entradas, en lugar de los
+-- conjuntos "A" y "B" a los que pertenecen. Lo mismo ocurre para el
+-- conjunto "E", que es una función de "a" y "m". Esta configuración un
+-- poco extraña tiene la consecuencia aún más extraña de que, en
+-- realidad, si Lean conoce las cuarto y quinto datos (en este caso, las
+-- pruebas de " is_limit) y " is_limit") entonces *ni siquiera necesita
+-- saber cuáles son las tres primeras entradas*, porque Lean puede
+-- calcularlas a partir del *tipo* de las entradas cuarta y quinta.
+--
+-- En resumen, las cinco entradas de esta función son
+-- + `a` de tipo `ℕ → ℝ`,
+-- + `l` y "m" de tipo `ℝ`,
+-- + `h1` de tipo `is_limit a l`
+-- + `h2` de tipo `is_limit a m`.
+--
+-- En particular, si conocemos las entradas cuarta y quinta `h1` y `h2`,
+-- entonces mirando a los tipos de estos términos, podemos realmente
+-- trabajar lo que tienen que ser las tres primeras entradas para que
+-- todo tenga sentido.
+--
+-- Por eso ponemos las tres primeras entradas entre paréntesis
+-- `{}`. Esto significa que "estas entradas son parte de la función,
+-- pero el *sistema de unificación* de Lean (la parte del sistema que
+-- comprueba que todo tiene el tipo correcto) los resolverá
+-- automáticamente, por lo que no molestaremos al usuario preguntando
+-- por ellos". En resumen, si alguna vez ejecutamos esta función de
+-- cinco entradas, podemos simplemente dar `h1` y `h2` y dejar que Lean
+-- resuelva las tres primeras entradas por sí mismo. En general, si la
+-- entrada de una función tiene corchetes `{}` entonces el usuario no
+-- tiene que proporcionar esas entradas, el usuario puede confiar en el
+-- sistema los rellene automáticamente.
+
+-- Demostración comentada
+theorem is_limit_subsingleton
+  {a : ℕ → ℝ}
+  {l m : ℝ}
+  (hl : is_limit a l)
+  (hm : is_limit a m)
+  : l = m :=
+begin
+  -- Por contradicción. Supongamos `h : l ≠ m` y demostremos `false`.
+  by_contra h,
+  -- La idea es que si `ε = |l - m|` entonces la sucesión `a` estará
+  -- eventualmente dentro de `ε/2` de `l` y `ε/2` de `m`, lo que será
+  -- una contradicción. Para hacer la vida más fácil, rompamos la
+  -- simetría y supongamos que `l < m`, porque entonces podemos dejar
+  -- que `ε` sea `m - l`.
+  wlog hlm : l < m,
+  -- Lean comprueba que todo es simétrico en `l` y `m` así que esta
+  -- táctica tiene éxito, pero nos pide que demostremos que o bien `l <
+  -- m` o bien `m < l`. Ahora tenemos dos objetivos así que pongamos un
+  -- par `{` `}` para obtener de nuevo un objetivo.
+  { -- Ahora sólo tenemos la única meta fácil `l < m ∨ m < l`. Primero
+    -- observamos que los reales están totalmente ordenados, así que
+    -- podemos añadir `l < m ∨ l = m ∨ m < l` a la lista de hipótesis con
+    -- la táctica `have`:
+    have : l < m ∨ l = m ∨ m < l := lt_trichotomy l m,
+    -- Ahora el resultado se desprende por pura lógica.
+    tauto },
+  -- Ahora definamos ε como m - l.
+  set ε := m - l with hε,
+  -- Matemáticamente, el plan es encontrar ahora números naturales
+  -- grandes `L` y `M` tales que `n ≥ L → |a n - l| < ε/2`, y `n ≥ M →
+  -- |a n - m| < ε/2`, y luego establecer `n = max L M` para obtener una
+  -- contradicción. ¿Cómo hacemos esto en Lean?
+  --
+  -- Bien, pensemos en `hl` como una función. Su tipo es `is_limit a l`
+  -- que es, por definición, `∀ ε, ε > 0 → ...`. Así que `hl` es una
+  -- función que quiere como entrada un número real y una prueba de que
+  -- es positivo. Demos primero a `hl` el número real `ε/2` de una vez
+  -- por todas (es la única vez que usaremos `hl` en la prueba, así que
+  -- podemos cambiar su definición).
+  specialize hl (ε/2),
+  -- Ahora `hl` es una función que quiere una prueba por `ε/2>0` como su
+  -- entrada. Matemáticamente, esto es obvio: `ε/2=(m-l)/2` y `l <
+  -- m`. La táctica de Lean `linarith` (aritmética lineal) puede
+  -- resolver este tipo de objetivo:
+  have hε2 : ε/2 > 0 := by linarith,
+  -- Ahora podemos especializar más a `hl`:
+  specialize hl hε2,
+  -- Ahora `hl` ya no es una función. En la jerga, es un tipo en lugar
+  -- de un tipo pi. `hl : ∃ (N : ℕ), ∀ (n : ℕ), n ≥ N → |a n - l| < ε /
+  -- 2` `hl` es ahora un hecho de un par de piezas de información:
+  -- primero un número natural `N`, y segundo una prueba de algún hecho
+  -- sobre `N`. Podemos separar `hl` en estas dos piezas con la táctica
+  -- `cases`:
+  cases hl with L hL,
+  -- Ahora `L` es el natural y `hL` es una demostración de un teorema
+  -- sobre él: `hL : ∀ (n : ℕ), n ≥ L → |a n - l| < ε / 2`
+  --
+  -- A continuación tenemos que hacer lo mismo con `hm`. Vamos a hacerlo
+  -- todo de una vez. Comprueba que entiendes por qué esta única línea
+  -- hace el mismo tipo de cosas que las cuatro líneas anteriores.
+  cases hm (ε/2) (by linarith) with M hM,
+  -- Ahora volvamos a la prueba matemática. Sea N el máximo de L y M.
+  set N := max L M with hN,
+  -- Anotemos aquí el hecho de que `L ≤ N` y `M ≤ N`. Encontré estas
+  -- pruebas usando `library_search` y luego haciendo clic en "Try
+  -- this!". Por ejemplo, `have hLN : L ≤ N := por library_search`,
+  have hLN : L ≤ N := le_max_left L M,
+  have hMN : M ≤ N := le_max_right L M,
+  -- Vamos a poner `n = N` en `hL` y `hM`. De nuevo estoy pensando en
+  -- estas cosas como funciones.
+  specialize hL N hLN,
+  specialize hM N hMN,
+  -- Parece que ya deberíamos haber terminado: todo debería seguirse ahora
+  -- de las desigualdades obtenidas. Pero tenemos que darle a Lean una
+  -- pista más, porque `linarith` no sabe nada de la función `abs`;
+  -- necesitamos saber que |x|<ε/2 es lo mismo que `-ε/2 < x ∧ x <
+  -- ε/2`. Este teorema se llama `abs_lt` ("el valor absoluto es menor
+  -- que").
+  rw abs_lt at hL hM,
+  -- Como reto, ¿puedes ahora mirar el estado de la táctica y terminar
+  -- la prueba en papel? La táctica `linarith` de Lean puede ver su
+  -- camino a través del laberinto de desigualdades. Terminemos esta
+  -- prueba y hablemos de `linarith` y de otra táctica de gran potencia,
+  -- `ring`.
+  linarith,
+end
+
+-- Nota. Dos comentarios rápidos sobre algunas otras cosas nuevas en la
+-- prueba anterior:
+--
+-- 1) En este seminario utilizaremos mucho el término "máximo". El
+-- término "max A B" es el máximo de "A" y "B". La definición de `max`
+-- es una definición, no un teorema, lo que significa que habrá una API
+-- asociada a ella, es decir, una lista de pequeños teoremas que hacen
+-- posible el uso de `max`. Acabamos de ver los dos teoremas importantes
+-- que utilizaremos: `le_max_left A B : A ≤ max A B` y `le_max-right A B
+-- : B ≤ max A B`.
+--
+-- Hay otras funciones interesantes en la API `max`, por ejemplo `max_le
+-- : A ≤ C → B ≤ C → max A B ≤ C`. La forma más fácil de orientarse en
+-- la API `max` es *adivinar* los nombres de los teoremas. Por ejemplo,
+-- ¿cómo crees que se llama `max A B < C ↔ A < C ∧ B < C`? Si no puedes
+-- adivinarlo, haz trampa ejecutando
+--    example (A B C : ℝ) : max A B < C ↔ A < C ∧ B < C :=
+--    begin
+--      library_search
+--    end
+--
+-- 2) `specialize` es una táctica que modifica una función fijando una
+-- vez para todas las primeras entradas. Por ejemplo, digamos que `f : A
+-- → B → C → D` es una función. Como `→` es asociativa por la derecha en
+-- Lean, `f` es una función que quiere una entrada de `A`, y luego da
+-- una función que quiere una entrada de `B`, y da una función que
+-- quiere una entrada de `C` y da un elemento de `D`. Así que en
+-- realidad es sólo una función que toma tres entradas, una de `A`, una
+-- de `B` y una de `C`, y da como resultado algo en `D`. Esto es lo que
+-- los informáticos llaman "currying".
+--
+-- Ahora digamos que tengo `a : A` y quiero que esta sea mi primera
+-- entrada para `f`, y no quiero volver a ejecutar `f` con ninguna otra
+-- entrada de `A`. Entonces
+--    `especializar f a`
+-- introducirá `a` en `f` y luego renombrará `f` para que sea la nueva
+-- función resultante `B → C → D`.
+
+-- Nota sobre la táctica `ring`. La táctica `ring` probará cualquier
+-- objetivo que pueda deducirse de los axiomas de un anillo conmutativo
+-- (o incluso de un semirretículo conmutativo como `ℕ`). Por ejemplo, si
+-- `(x y : ℝ)` y el objetivo es `(x+y)^3=x^3+3*x^2*y+3*x*y^2+y^ entonces
+-- `ring` resolverá este objetivo. En la prueba de `is_limit_add` que
+-- aparece a continuación en mi archivo de soluciones, utilizo `ring`
+-- para demostrar que `a n + b n - (l + m) = (a n - l) + (b n - m)` y
+-- para demostrar que `ε/2 + ε/2 = ε`. Nótese que `ring` se confundirá
+-- si ve términos `λ` ya que trabaja hasta la igualdad sintáctica. La
+-- táctica `ring` quiere ver una afirmación limpia sobre los elementos
+-- de un anillo que implique sólo `+`, `-` y `*`. Tenga en cuenta
+-- también que `ring` no mira las hipótesis, sólo trabaja con el
+-- objetivo. Así que, por ejemplo, `ring` no resolverá este objetivo
+-- directamente:
+--    a b c : ℝ
+--    ha : a = b + c
+--    ⊢ 2 * a = b + b + c + c
+-- Para resolver este objetivo hay que hacer `rw ha` y luego `ring`.
+
+-- La táctica `linarith`
+-- ---------------------
+
+-- La táctica `linarith` resuelve desigualdades lineales. Por ejemplo,
+-- resolverá este objetivo:
+--    a b c : ℝ
+--    hab : a ≤ b
+--    hbc : b < c
+--    ⊢ a ≤ c + 1
+-- Sin embargo, hay que tener en cuenta que no hará la lógica por el
+-- usuario. Por ejemplo no resolverá este objetivo:
+--    a b c : ℝ
+--    hab : a ≤ b
+--    hbc : a ≤ b → b < c
+--    ⊢ a ≤ c + 1
+-- aunque `b < c` es " evidentemente cierto por `hab`", `linarith` no
+-- puede verlo. La única cosa que puede ver es `∧` en las hipótesis:
+-- resolverá este objetivo.
+--    a b c : ℝ
+--    h : a ≤ b ∧ b < c
+--    ⊢ a ≤ c + 1
+-- Sin embargo no verá a través de `∧` en las conclusiones; no resolverá
+-- esto.
+--    a b c : ℝ
+--    h : a ≤ b ∧ b < c
+--    ⊢ a ≤ c + 1 ∧ a ≤ c + 1
+-- Para resolver este objetivo, utiliza `split; linarith`. El punto y
+-- coma significa "aplicar la siguiente táctica a todos los objetivos
+-- creados por la táctica anterior".
+--
+-- Si no estás seguro de si `linarith` puede ver una desigualdad,
+-- simplemente aíslala como una hipótesis o conclusión por sí
+-- misma. Entonces `linarith` podrá verla sin duda.
+
+-- La táctica convert
+-- ------------------
+
+-- Ya que estamos aquí, he aquí una explicación de otra táctica de gran
+-- potencia.
+--
+-- Si tu objetivo es `⊢ P` y tienes una hipótesis `h : P'` en la que `P`
+-- y `P'` sólo difieren ligeramente, entonces `convert h'` reemplazará
+-- el objetivo con nuevos objetivos pidiendo que se justifique que todos
+-- los lugares en los que `P` y `P'` difieren son iguales.
+--
+-- He aquí un ejemplo:
+
+example
+  (a b : ℝ)
+  (h : a * 2 = b + 1)
+  : a + a = b - (-1) :=
+begin
+  -- rw `h` no puede funcionar porque no tenemos una coincidencia
+  -- completa en ambos lados de la igualdad.
+  convert h,
+  -- genera dos objetivos: `a + a = a * 2` and `b - -1 = b + 1`
+  { ring },
+  { ring }
+end
+
+-- Nota. Un ejemplo en el que las cosas pueden ir un poco mal es el
+-- siguiente.
+
+example
+  (a b : ℝ)
+  (h : a * 2 = b + 1)
+  : a + a = 1 + b :=
+begin
+  -- convert h,
+  convert h using 1,
+  { ring },
+  { ring }
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que si el límite de la sucesión a es l y c ∈ ℝ,
+-- entonces el límite de a(i)+c es l+c.
+-- ---------------------------------------------------------------------
+
+-- 1ª demostración
+example
+  {a : ℕ → ℝ}
+  {l : ℝ}
+  (c : ℝ)
+  (ha : is_limit a l)
+  : is_limit (λ i, a i + c) (l + c) :=
+begin
+  intros ε hε,
+  dsimp,
+  cases ha ε hε with k hk,
+  use k,
+  intros n hn,
+  calc |a n + c - (l + c)|
+       = |a n - l|         : by norm_num
+   ... < ε                 : hk n hn,
+end
+
+-- 2ª demostración
+-- ===============
+
+example
+  {a : ℕ → ℝ}
+  {l : ℝ}
+  (c : ℝ)
+  (ha : is_limit a l)
+  : is_limit (λ i, a i + c) (l + c) :=
+begin
+  intros ε hε,
+  dsimp,
+  cases ha ε hε with k hk,
+  use k,
+  intros n hn,
+  convert hk n hn using 2,
+  ring,
+end
+
+-- 3ª demostración
+-- ===============
+
+example
+  {a : ℕ → ℝ}
+  {l : ℝ}
+  (c : ℝ)
+  (ha : is_limit a l)
+  : is_limit (λ i, a i + c) (l + c) :=
+begin
+  intros ε hε,
+  convert ha ε hε,
+  by norm_num,
+end
+
+-- 4ª demostración
+-- ===============
+
+lemma is_limit_add_const
+  {a : ℕ → ℝ}
+  {l : ℝ}
+  (c : ℝ)
+  (ha : is_limit a l)
+  : is_limit (λ i, a i + c) (l + c) :=
+λ ε hε, (by convert ha ε hε; norm_num)
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que son equivalentes
+-- + el límite de a(i) es l
+-- + el límite de a(i)+c es l+c
+-- ---------------------------------------------------------------------
+
+-- 1ª demostración
+example
+  {a : ℕ → ℝ}
+  {l : ℝ}
+  (c : ℝ)
+  : is_limit a l ↔ is_limit (λ i, a i + c) (l + c) :=
+begin
+  split,
+  { apply is_limit_add_const },
+  { intro h,
+    have h' := is_limit_add_const (-c) h,
+    simp at h',
+    exact h', }
+end
+
+-- 2ª demostración
+lemma is_limit_add_const_iff
+  {a : ℕ → ℝ}
+  {l : ℝ}
+  (c : ℝ)
+  : is_limit a l ↔ is_limit (λ i, a i + c) (l + c) :=
+begin
+  split,
+  { apply is_limit_add_const },
+  { intro h,
+    convert is_limit_add_const (-c) h,
+    { ext, ring, },
+    { ring, }},
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que son equivalentes
+-- + el límite de a(i) es l
+-- + el límite de a(i)-l es 0
+-- ---------------------------------------------------------------------
+
+-- 1ª demostración
+example
+  (a : ℕ → ℝ)
+  (l : ℝ)
+  : is_limit a l ↔ is_limit (λ i, a i - l) 0 :=
+begin
+  have h := @is_limit_add_const_iff a l (-l),
+  simp [tactic.ring.add_neg_eq_sub] at h,
+  exact h,
+end
+
+-- 2ª demostración
+lemma is_limit_iff_is_limit_sub_eq_zero
+  (a : ℕ → ℝ)
+  (l : ℝ)
+  : is_limit a l ↔ is_limit (λ i, a i - l) 0 :=
+begin
+  convert is_limit_add_const_iff (-l),
+  { ext, ring },
+  { ring }
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que el límite de la suma de dos sucesiones
+-- convergentes es la suma de los límites de dichas sucesiones.
+-- ---------------------------------------------------------------------
+
+theorem is_limit_add
+  {a b : ℕ → ℝ}
+  {l m : ℝ}
+  (h1 : is_limit a l)
+  (h2 : is_limit b m)
+  : is_limit (a + b) (l + m) :=
+begin
+  intros ε Hε,
+  cases h1 (ε/2) (by linarith) with L HL,
+  cases h2 (ε/2) (by linarith) with M HM,
+  set N := max L M with hN,
+  use N,
+  have HLN : N ≥ L := le_max_left _ _,
+  have HMN : N ≥ M := le_max_right _ _,
+  intros n Hn,
+  have H3 : |a n - l| < ε/2 := HL n (by linarith),
+  have H4 : |b n - m| < ε/2 := HM n (by linarith),
+  calc |(a + b) n - (l + m)|
+       = |(a n + b n) - (l + m)|   : rfl
+  ...  = |(a n - l) + (b n - m)|   : by ring
+  ...  ≤ |(a n - l)| + |(b n - m)| : abs_add _ _
+  ...  < ε/2 + ε/2                 : by linarith
+  ...  = ε                         : by ring
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que si el límite de a(i) es l, entonces el de
+-- c*a(i) es c*l.
+-- ---------------------------------------------------------------------
+
+lemma is_limit_mul_const_left
+  {a : ℕ → ℝ}
+  {l c : ℝ}
+  (h : is_limit a l)
+  : is_limit (λ n, c * (a n)) (c * l) :=
+begin
+  by_cases hc : c = 0,
+  { subst hc,
+    convert is_limit_const 0,
+    { ext, simp, },
+    { simp, }},
+  { have hc' : 0 < |c| := by rwa abs_pos,
+    intros ε hε,
+    have hεc : 0 < ε / |c| := div_pos hε hc',
+    specialize h (ε/|c|) hεc,
+    cases h with N hN,
+    use N,
+    intros n hn,
+    specialize hN n hn,
+    dsimp only,
+    rw [← mul_sub, abs_mul],
+    rw ← lt_div_iff' hc',
+    exact hN, }
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que si el límite de a(n) es α y el de b(n) es β,
+-- entonces el de c·a(n)+d·b(n) es c·α+d·β
+-- ---------------------------------------------------------------------
+
+lemma is_limit_linear
+  (a : ℕ → ℝ)
+  (b : ℕ → ℝ) (α β c d : ℝ)
+  (ha : is_limit a α)
+  (hb : is_limit b β)
+  : is_limit (λ n, c * (a n) + d * (b n) ) (c * α + d * β) :=
+begin
+  apply is_limit_add,
+  { apply is_limit_mul_const_left ha },
+  { apply is_limit_mul_const_left hb },
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que si las sucesiones a(n) y b(n) convergen a
+-- cero, entonces a(n)·b(n) también converge a cero.
+-- ---------------------------------------------------------------------
+
+lemma is_limit_mul_eq_zero_of_is_limit_eq_zero
+  {a : ℕ → ℝ}
+  {b : ℕ → ℝ}
+  (ha : is_limit a 0)
+  (hb : is_limit b 0)
+  : is_limit (a * b) 0 :=
+begin
+  intros ε hε,
+  cases ha ε hε with A hA,
+  cases hb 1 (by linarith) with B hB,
+  set N := max A B with hN,
+  use N,
+  intros n hn,
+  have hAN : A ≤ N := le_max_left A B,
+  have hBN : B ≤ N := le_max_right A B,
+  specialize hA n (by linarith),
+  specialize hB n (by linarith),
+  rw sub_zero at ⊢ hA hB,
+  rw pi.mul_apply,
+  rw abs_mul,
+  convert mul_lt_mul'' hA hB _ _, simp,
+  all_goals {apply abs_nonneg},
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que el límite del producto de dos sucesiones
+-- convergentes es el producto de sus límites.
+-- ---------------------------------------------------------------------
+
+-- 1ª demostración
+example
+  (a : ℕ → ℝ)
+  (b : ℕ → ℝ)
+  (l m : ℝ)
+  (h1 : is_limit a l)
+  (h2 : is_limit b m)
+  : is_limit (a * b) (l * m) :=
+begin
+  suffices : is_limit (λ i, (a i - l) * (b i - m) + (l * (b i - m)) + m * (a i - l)) 0,
+  { rw is_limit_iff_is_limit_sub_eq_zero,
+      convert this,
+    ext,
+    rw pi.mul_apply,
+    ring },
+  have h1 : is_limit (λ i, a i - l) 0,
+  { rwa is_limit_iff_is_limit_sub_eq_zero at h1 },
+  have h2 : is_limit (λ i, b i - m) 0,
+  { rwa is_limit_iff_is_limit_sub_eq_zero at h2 },
+  have h3 : is_limit (λ i, (a i - l) * (b i - m)) 0,
+  { apply is_limit_mul_eq_zero_of_is_limit_eq_zero h1 h2 },
+  have h4 : is_limit (λ i, l * (b i - m)) 0,
+  { convert is_limit_mul_const_left h2,
+    ring },
+  have h5 : is_limit (λ i, m * (a i - l)) 0,
+  { convert is_limit_mul_const_left h1,
+    ring },
+  convert is_limit_add (_ : is_limit _ 0) h5, norm_num,
+  convert is_limit_add h3 h4,
+  norm_num,
+end
+
+-- 2ª demostración
+theorem is_limit_mul
+  (a : ℕ → ℝ)
+  (b : ℕ → ℝ)
+  (l m : ℝ)
+  (h1 : is_limit a l)
+  (h2 : is_limit b m)
+  : is_limit (a * b) (l * m) :=
+begin
+  suffices : is_limit (λ i, (a i - l) * (b i - m) + (l * (b i - m)) + m * (a i - l)) 0,
+  { rw is_limit_iff_is_limit_sub_eq_zero,
+      convert this,
+    ext,
+    rw pi.mul_apply,
+    ring },
+  have h1 : is_limit (λ i, a i - l) 0,
+  { rwa is_limit_iff_is_limit_sub_eq_zero at h1 },
+  have h2 : is_limit (λ i, b i - m) 0,
+  { rwa is_limit_iff_is_limit_sub_eq_zero at h2 },
+  have h3 : is_limit (λ i, (a i - l) * (b i - m)) 0,
+  { apply is_limit_mul_eq_zero_of_is_limit_eq_zero h1 h2 },
+  have h4 : is_limit (λ i, l * (b i - m)) 0,
+  { convert is_limit_mul_const_left h2,
+    ring },
+  have h5 : is_limit (λ i, m * (a i - l)) 0,
+  { convert is_limit_mul_const_left h1,
+    ring },
+  convert is_limit_add (_ : is_limit _ 0) h5, norm_num,
+  convert is_limit_add h3 h4,
+  norm_num,
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que si aₙ → l, bₙ → m y aₙ ≤ bₙ para todo n,
+-- entonces l ≤ m.
+-- ---------------------------------------------------------------------
+
+-- 1ª demostración
+example
+  (a : ℕ → ℝ)
+  (b : ℕ → ℝ)
+  (l : ℝ)
+  (m : ℝ)
+  (hl : is_limit a l)
+  (hm : is_limit b m)
+  (hle : ∀ n, a n ≤ b n)
+  : l ≤ m :=
+begin
+  apply le_of_not_lt,
+  intro hlt,
+  set ε := (l - m) /2 with hεlm,
+  have hε : 0 < ε := by linarith,
+  cases hl ε hε with Na HNa,
+  cases hm ε hε with Nb HNb,
+  let N := max Na Nb,
+  have HNa' : Na ≤ N := le_max_left Na Nb,
+  have HNb' : Nb ≤ N := le_max_right Na Nb,
+  have Hl' : |a N - l| < ε := HNa N HNa',
+  have Hm' : |b N - m| < ε := HNb N HNb',
+  have HN : a N ≤ b N := hle N,
+  rw abs_lt at Hl' Hm',
+  linarith,
+end
+
+-- 2ª demostración
+theorem is_limit_le_of_le
+  (a b : ℕ → ℝ)
+  (l m : ℝ)
+  (hl : is_limit a l)
+  (hm : is_limit b m)
+  (hle : ∀ n, a n ≤ b n)
+  : l ≤ m :=
+begin
+  apply le_of_not_lt,
+  intro hlt,
+  set ε := (l - m) /2 with hε,
+  cases hl ε (by linarith) with Na HNa,
+  cases hm ε (by linarith) with Nb HNb,
+  let N := max Na Nb,
+  have Hl : |a N - l| < ε :=
+    HNa N (le_max_left Na Nb),
+  have Hm : |b N - m| < ε :=
+    HNb N (le_max_right Na Nb),
+  have HN : a N ≤ b N := hle N,
+  rw abs_lt at Hl Hm,
+  linarith,
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar el teorema del emparedado; es decir, sean a(n),
+-- b(n) y c(n) tres sucesiones tales que (∀ n, a(n) ≤ b(n) ≤ c(n)) y
+-- a(n) tiene el mismo límite que c(n), entonces b(n) también tiene el
+-- mismo límite.
+-- ---------------------------------------------------------------------
+
+theorem sandwich
+  (a b c : ℕ → ℝ)
+  (l : ℝ)
+  (ha : is_limit a l)
+  (hc : is_limit c l)
+  (hab : ∀ n, a n ≤ b n)
+  (hbc : ∀ n, b n ≤ c n)
+  : is_limit b l :=
+begin
+  intros ε hε,
+  cases ha ε hε with A hA,
+  cases hc ε hε with C hC,
+  set N := max A C with hN,
+  use N,
+  intros n hn,
+  rw hN at hn,
+  replace hn := max_le_iff.1 hn,
+  specialize hA n (by linarith),
+  specialize hC n (by linarith),
+  specialize hab n,
+  specialize hbc n,
+  rw abs_lt at *,
+  split;
+  linarith,
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Definir la función
+--    is_bounded : (ℕ → ℝ) → Prop
+-- tal que (is_bounded a) expresa que la sucesión a está acotada.
+-- ---------------------------------------------------------------------
+
+definition is_bounded (a : ℕ → ℝ) :=
+∃ B, ∀ n, |a n| ≤ B
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Demostrar que si a(n) está acotada por 0, entonces es la
+-- sucesión nula.
+-- ---------------------------------------------------------------------
+
+-- 1ª demostración
+example
+  {a : ℕ → ℝ}
+  (h : ∀ n, |a n| ≤ 0)
+  : ∀ n, a n = 0 :=
+begin
+  intro n,
+  rw ← abs_eq_zero,
+  specialize h n,
+  apply le_antisymm,
+  { exact h, },
+  { exact abs_nonneg (a n), },
+end
+
+-- 2ª demostración
+example
+  {a : ℕ → ℝ}
+  (h : ∀ n, |a n| ≤ 0)
+  : ∀ n, a n = 0 :=
+begin
+  intro n,
+  rw ← abs_eq_zero,
+  specialize h n,
+  exact le_antisymm h (abs_nonneg (a n)),
+end
+
+-- 3ª demostración
+example
+  {a : ℕ → ℝ}
+  (h : ∀ n, |a n| ≤ 0)
+  : ∀ n, a n = 0 :=
+begin
+  intro n,
+  rw ← abs_eq_zero,
+  exact le_antisymm (h n) (abs_nonneg (a n)),
+end
+
+-- 4ª demostración
+example
+  {a : ℕ → ℝ}
+  (h : ∀ n, |a n| ≤ 0)
+  : ∀ n, a n = 0 :=
+begin
+  intro n,
+  exact abs_eq_zero.mp (le_antisymm (h n) (abs_nonneg (a n))),
+end
+
+-- 5ª demostración
+lemma acotada_por_cero
+  {a : ℕ → ℝ}
+  (h : ∀ n, |a n| ≤ 0)
+  : ∀ n, a n = 0 :=
+λ n, abs_eq_zero.mp (le_antisymm (h n) (abs_nonneg (a n)))
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Sean a(n) y b(n) dos sucesiones tales que a(n) está
+-- acotada y b(n) converge a 0. Demostrar que a*b converge a 0.
+-- ---------------------------------------------------------------------
+
+-- 1ª demostración
+example
+  {a : ℕ → ℝ}
+  {b : ℕ → ℝ}
+  (hA : is_bounded a)
+  (hB : is_limit b 0)
+  : is_limit (a*b) 0 :=
+begin
+  cases hA with A hA,
+  have hAnonneg : 0 ≤ A,
+    calc 0 ≤ |a 0| : abs_nonneg (a 0)
+       ... ≤ A     : hA 0,
+  by_cases hA0 : A = 0,
+  { subst hA0,
+    intros ε hε,
+    use 0,
+    intros n hn,
+    simp_rw [sub_zero] at *,
+    calc |(a * b) n|
+         = |a n * b n|   : congr_arg abs (pi.mul_apply a b n)
+     ... = |a n| * |b n| : abs_mul (a n) (b n)
+     ... ≤ 0 * |b n|     : mul_le_mul_of_nonneg_right (hA n) (abs_nonneg (b n))
+     ... = 0             : zero_mul (|b n|)
+     ... < ε             : hε, },
+  { change A ≠ 0 at hA0,
+    have hApos : 0 < A := (ne.le_iff_lt hA0.symm).mp hAnonneg,
+    intros ε hε,
+    cases hB (ε/A) (div_pos hε hApos) with N hN,
+    use N,
+    intros n hn,
+    simp_rw [sub_zero] at *,
+    calc |(a * b) n|
+         = |a n * b n|    : congr_arg abs (pi.mul_apply a b n)
+     ... = |a n| * |b n|  : abs_mul (a n) (b n)
+     ... ≤ A * |b n|      : mul_le_mul_of_nonneg_right (hA n) (abs_nonneg _)
+     ... < A * (ε/A)      : mul_lt_mul_of_pos_left (hN n hn) hApos
+     ... = ε              : mul_div_cancel' ε hA0 },
+end
+
+-- 2ª demostración
+lemma tendsto_bounded_mul_zero
+  {a : ℕ → ℝ}
+  {b : ℕ → ℝ}
+  (hA : is_bounded a)
+  (hB : is_limit b 0)
+  : is_limit (a*b) 0 :=
+begin
+  cases hA with A hA,
+  have hAnonneg : 0 ≤ A,
+    { refine le_trans _ (hA 0),
+      apply abs_nonneg, },
+  by_cases hA0 : A = 0,
+  { subst hA0,
+    have hA2 : ∀ n, a n = 0,
+      { intro n,
+        specialize hA n,
+        have h := abs_nonneg (a n),
+        rw ← abs_eq_zero,
+        linarith },
+    convert is_limit_const 0,
+    ext n,
+    rw pi.mul_apply,
+    rw hA2,
+    simp },
+  { change A ≠ 0 at hA0,
+    have hApos : 0 < A,
+      rwa ← (hA0.symm).le_iff_lt,
+    intros ε εpos,
+    cases hB (ε/A) (div_pos εpos hApos) with N hN,
+    simp_rw [sub_zero] at hN,
+    use N,
+    intros n hn,
+    calc |(a * b) n - 0|
+         = |a n * b n|    : by simp
+     ... = |a n| * |b n|  : abs_mul _ _
+     ... ≤ A * |b n|      : mul_le_mul_of_nonneg_right (hA n) (abs_nonneg _)
+     ... < A * (ε/A)      : mul_lt_mul_of_pos_left (hN n hn) hApos
+     ... = ε              : mul_div_cancel' ε hA0 },
+end
+
+-- ---------------------------------------------------------------------
+-- Ejercicio. Definir la función
+--    is_cauchy : (ℕ → ℝ) → Prop
+-- tal que (is_cauchy a) expresa que a es una sucesión de Cauchy.
+-- ---------------------------------------------------------------------
+
+def is_cauchy (a : ℕ → ℝ) : Prop :=
+∀ ε > 0, ∃ N, ∀ m ≥ N, ∀ n ≥ N, |a m - a n| < ε
+
+end oculto
+
+-- =====================================================================
+-- § Referencias                                                      --
+-- =====================================================================
+
+-- + Kevin Buzzard. "Formalising mathematics : workshop 3 — sequences
+--   and limits". https://bit.ly/3pFLwZx
+-- + Kevin Buzzard. formalising-mathematics: week 3, Part_A_limits.lean
+--   https://bit.ly/3CnijWL
+-- + Kevin Buzzard. formalising-mathematics: week 3, Part_A_limits_solutions.lean
+--   https://bit.ly/3vQjtrl

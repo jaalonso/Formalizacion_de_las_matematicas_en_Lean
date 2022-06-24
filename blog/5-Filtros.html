@@ -1,0 +1,401 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" lang="es" xml:lang="es">
+<head>
+<!-- 2021-02-27 sáb 08:12 -->
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>5ª clase de "Formalización de las matemáticas": Filtros</title>
+<meta name="generator" content="Org mode" />
+<meta name="author" content="José A. Alonso" />
+<style type="text/css">
+ <!--/*--><![CDATA[/*><!--*/
+  .title  { text-align: center;
+             margin-bottom: .2em; }
+  .subtitle { text-align: center;
+              font-size: medium;
+              font-weight: bold;
+              margin-top:0; }
+  .todo   { font-family: monospace; color: red; }
+  .done   { font-family: monospace; color: green; }
+  .priority { font-family: monospace; color: orange; }
+  .tag    { background-color: #eee; font-family: monospace;
+            padding: 2px; font-size: 80%; font-weight: normal; }
+  .timestamp { color: #bebebe; }
+  .timestamp-kwd { color: #5f9ea0; }
+  .org-right  { margin-left: auto; margin-right: 0px;  text-align: right; }
+  .org-left   { margin-left: 0px;  margin-right: auto; text-align: left; }
+  .org-center { margin-left: auto; margin-right: auto; text-align: center; }
+  .underline { text-decoration: underline; }
+  #postamble p, #preamble p { font-size: 90%; margin: .2em; }
+  p.verse { margin-left: 3%; }
+  pre {
+    border: 1px solid #ccc;
+    box-shadow: 3px 3px 3px #eee;
+    padding: 8pt;
+    font-family: monospace;
+    overflow: auto;
+    margin: 1.2em;
+  }
+  pre.src {
+    position: relative;
+    overflow: visible;
+    padding-top: 1.2em;
+  }
+  pre.src:before {
+    display: none;
+    position: absolute;
+    background-color: white;
+    top: -10px;
+    right: 10px;
+    padding: 3px;
+    border: 1px solid black;
+  }
+  pre.src:hover:before { display: inline;}
+  /* Languages per Org manual */
+  pre.src-asymptote:before { content: 'Asymptote'; }
+  pre.src-awk:before { content: 'Awk'; }
+  pre.src-C:before { content: 'C'; }
+  /* pre.src-C++ doesn't work in CSS */
+  pre.src-clojure:before { content: 'Clojure'; }
+  pre.src-css:before { content: 'CSS'; }
+  pre.src-D:before { content: 'D'; }
+  pre.src-ditaa:before { content: 'ditaa'; }
+  pre.src-dot:before { content: 'Graphviz'; }
+  pre.src-calc:before { content: 'Emacs Calc'; }
+  pre.src-emacs-lisp:before { content: 'Emacs Lisp'; }
+  pre.src-fortran:before { content: 'Fortran'; }
+  pre.src-gnuplot:before { content: 'gnuplot'; }
+  pre.src-haskell:before { content: 'Haskell'; }
+  pre.src-hledger:before { content: 'hledger'; }
+  pre.src-java:before { content: 'Java'; }
+  pre.src-js:before { content: 'Javascript'; }
+  pre.src-latex:before { content: 'LaTeX'; }
+  pre.src-ledger:before { content: 'Ledger'; }
+  pre.src-lisp:before { content: 'Lisp'; }
+  pre.src-lilypond:before { content: 'Lilypond'; }
+  pre.src-lua:before { content: 'Lua'; }
+  pre.src-matlab:before { content: 'MATLAB'; }
+  pre.src-mscgen:before { content: 'Mscgen'; }
+  pre.src-ocaml:before { content: 'Objective Caml'; }
+  pre.src-octave:before { content: 'Octave'; }
+  pre.src-org:before { content: 'Org mode'; }
+  pre.src-oz:before { content: 'OZ'; }
+  pre.src-plantuml:before { content: 'Plantuml'; }
+  pre.src-processing:before { content: 'Processing.js'; }
+  pre.src-python:before { content: 'Python'; }
+  pre.src-R:before { content: 'R'; }
+  pre.src-ruby:before { content: 'Ruby'; }
+  pre.src-sass:before { content: 'Sass'; }
+  pre.src-scheme:before { content: 'Scheme'; }
+  pre.src-screen:before { content: 'Gnu Screen'; }
+  pre.src-sed:before { content: 'Sed'; }
+  pre.src-sh:before { content: 'shell'; }
+  pre.src-sql:before { content: 'SQL'; }
+  pre.src-sqlite:before { content: 'SQLite'; }
+  /* additional languages in org.el's org-babel-load-languages alist */
+  pre.src-forth:before { content: 'Forth'; }
+  pre.src-io:before { content: 'IO'; }
+  pre.src-J:before { content: 'J'; }
+  pre.src-makefile:before { content: 'Makefile'; }
+  pre.src-maxima:before { content: 'Maxima'; }
+  pre.src-perl:before { content: 'Perl'; }
+  pre.src-picolisp:before { content: 'Pico Lisp'; }
+  pre.src-scala:before { content: 'Scala'; }
+  pre.src-shell:before { content: 'Shell Script'; }
+  pre.src-ebnf2ps:before { content: 'ebfn2ps'; }
+  /* additional language identifiers per "defun org-babel-execute"
+       in ob-*.el */
+  pre.src-cpp:before  { content: 'C++'; }
+  pre.src-abc:before  { content: 'ABC'; }
+  pre.src-coq:before  { content: 'Coq'; }
+  pre.src-groovy:before  { content: 'Groovy'; }
+  /* additional language identifiers from org-babel-shell-names in
+     ob-shell.el: ob-shell is the only babel language using a lambda to put
+     the execution function name together. */
+  pre.src-bash:before  { content: 'bash'; }
+  pre.src-csh:before  { content: 'csh'; }
+  pre.src-ash:before  { content: 'ash'; }
+  pre.src-dash:before  { content: 'dash'; }
+  pre.src-ksh:before  { content: 'ksh'; }
+  pre.src-mksh:before  { content: 'mksh'; }
+  pre.src-posh:before  { content: 'posh'; }
+  /* Additional Emacs modes also supported by the LaTeX listings package */
+  pre.src-ada:before { content: 'Ada'; }
+  pre.src-asm:before { content: 'Assembler'; }
+  pre.src-caml:before { content: 'Caml'; }
+  pre.src-delphi:before { content: 'Delphi'; }
+  pre.src-html:before { content: 'HTML'; }
+  pre.src-idl:before { content: 'IDL'; }
+  pre.src-mercury:before { content: 'Mercury'; }
+  pre.src-metapost:before { content: 'MetaPost'; }
+  pre.src-modula-2:before { content: 'Modula-2'; }
+  pre.src-pascal:before { content: 'Pascal'; }
+  pre.src-ps:before { content: 'PostScript'; }
+  pre.src-prolog:before { content: 'Prolog'; }
+  pre.src-simula:before { content: 'Simula'; }
+  pre.src-tcl:before { content: 'tcl'; }
+  pre.src-tex:before { content: 'TeX'; }
+  pre.src-plain-tex:before { content: 'Plain TeX'; }
+  pre.src-verilog:before { content: 'Verilog'; }
+  pre.src-vhdl:before { content: 'VHDL'; }
+  pre.src-xml:before { content: 'XML'; }
+  pre.src-nxml:before { content: 'XML'; }
+  /* add a generic configuration mode; LaTeX export needs an additional
+     (add-to-list 'org-latex-listings-langs '(conf " ")) in .emacs */
+  pre.src-conf:before { content: 'Configuration File'; }
+
+  table { border-collapse:collapse; }
+  caption.t-above { caption-side: top; }
+  caption.t-bottom { caption-side: bottom; }
+  td, th { vertical-align:top;  }
+  th.org-right  { text-align: center;  }
+  th.org-left   { text-align: center;   }
+  th.org-center { text-align: center; }
+  td.org-right  { text-align: right;  }
+  td.org-left   { text-align: left;   }
+  td.org-center { text-align: center; }
+  dt { font-weight: bold; }
+  .footpara { display: inline; }
+  .footdef  { margin-bottom: 1em; }
+  .figure { padding: 1em; }
+  .figure p { text-align: center; }
+  .equation-container {
+    display: table;
+    text-align: center;
+    width: 100%;
+  }
+  .equation {
+    vertical-align: middle;
+  }
+  .equation-label {
+    display: table-cell;
+    text-align: right;
+    vertical-align: middle;
+  }
+  .inlinetask {
+    padding: 10px;
+    border: 2px solid gray;
+    margin: 10px;
+    background: #ffffcc;
+  }
+  #org-div-home-and-up
+   { text-align: right; font-size: 70%; white-space: nowrap; }
+  textarea { overflow-x: auto; }
+  .linenr { font-size: smaller }
+  .code-highlighted { background-color: #ffff00; }
+  .org-info-js_info-navigation { border-style: none; }
+  #org-info-js_console-label
+    { font-size: 10px; font-weight: bold; white-space: nowrap; }
+  .org-info-js_search-highlight
+    { background-color: #ffff00; color: #000000; font-weight: bold; }
+  .org-svg { width: 90%; }
+  /*]]>*/-->
+</style>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet"
+                       type="text/css"
+                       href="http://www.cs.us.es/~jalonso/estilos/estilo_3.css"
+                  />
+<script type="text/javascript">
+/*
+@licstart  The following is the entire license notice for the
+JavaScript code in this tag.
+
+Copyright (C) 2012-2019 Free Software Foundation, Inc.
+
+The JavaScript code in this tag is free software: you can
+redistribute it and/or modify it under the terms of the GNU
+General Public License (GNU GPL) as published by the Free Software
+Foundation, either version 3 of the License, or (at your option)
+any later version.  The code is distributed WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE.  See the GNU GPL for more details.
+
+As additional permission under GNU GPL version 3 section 7, you
+may distribute non-source (e.g., minimized or compacted) forms of
+that code without the copy of the GNU GPL normally required by
+section 4, provided you include this license notice and a URL
+through which recipients can access the Corresponding Source.
+
+
+@licend  The above is the entire license notice
+for the JavaScript code in this tag.
+*/
+<!--/*--><![CDATA[/*><!--*/
+ function CodeHighlightOn(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(null != target) {
+     elem.cacheClassElem = elem.className;
+     elem.cacheClassTarget = target.className;
+     target.className = "code-highlighted";
+     elem.className   = "code-highlighted";
+   }
+ }
+ function CodeHighlightOff(elem, id)
+ {
+   var target = document.getElementById(id);
+   if(elem.cacheClassElem)
+     elem.className = elem.cacheClassElem;
+   if(elem.cacheClassTarget)
+     target.className = elem.cacheClassTarget;
+ }
+/*]]>*///-->
+</script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+        displayAlign: "center",
+        displayIndent: "0em",
+
+        "HTML-CSS": { scale: 100,
+                        linebreaks: { automatic: "false" },
+                        webFont: "TeX"
+                       },
+        SVG: {scale: 100,
+              linebreaks: { automatic: "false" },
+              font: "TeX"},
+        NativeMML: {scale: 100},
+        TeX: { equationNumbers: {autoNumber: "AMS"},
+               MultLineWidth: "85%",
+               TagSide: "right",
+               TagIndent: ".8em"
+             }
+});
+</script>
+<script type="text/javascript"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-AMS_HTML"></script>
+</head>
+<body>
+<div id="content">
+<h1 class="title">5ª clase de "Formalización de las matemáticas": Filtros</h1>
+<div id="table-of-contents">
+<h2>&Iacute;ndice</h2>
+<div id="text-table-of-contents">
+<ul>
+<li><a href="#orgeed956a">1. ¿Qué es un filtro?</a></li>
+<li><a href="#org5dddb71">2. La definición formal de un filtro</a></li>
+</ul>
+</div>
+</div>
+<p>
+La palabra "filtro" significa diferentes cosas para diferentes personas; solo
+para aclarar, esta semana aprenderemos sobre la noción matemática de un <a href="https://en.wikipedia.org/wiki/Filter_(mathematics)#Filter_on_a_set">filtro
+en un conjunto</a>. He <a href="https://xenaproject.wordpress.com/2018/08/04/what-is-a-filter-how-some-computer-scientists-think-about-limits/">escrito sobre estos filtros antes</a>, pero desde entonces me las
+arreglé para comprender mucho mejor cómo pensar en los filtros, y espero que
+esto se vea aquí. Cuando escribí esa publicación en 2018, sabía que los filtros
+eran "algo que tiene que ver con los límites", pero ahora me doy cuenta de que
+esto está mal. Se utilizan para hablar de límites, pero lo que es un filtro en
+sí mismo es simplemente una generalización de un subconjunto de un conjunto.
+</p>
+
+<div id="outline-container-orgeed956a" class="outline-2">
+<h2 id="orgeed956a"><span class="section-number-2">1</span> ¿Qué es un filtro?</h2>
+<div class="outline-text-2" id="text-1">
+<p>
+Sea \(X\) un tipo; es decir, lo que la mayoría de los matemáticos llaman
+conjunto. Luego \(X\) tiene subconjuntos, y la colección de todos los subconjuntos
+de \(X\) tiene algunas propiedades realmente agradables: puede tomar uniones e
+intersecciones arbitrarias, por ejemplo, y si se ordena los subconjuntos de
+\(X\) por inclusión, entonces estas construcciones se pueden considerar como
+supremos e ínfimos y satisfacen un conjunto de axiomas que uno podría esperar
+que satisfagan los supremos e ínfimos; por ejemplo, si \(X_i ⊂ Y\) para todo \(i
+∈ I\), entonces \(⋃_i X_i ⊆ Y\). En resumen, los subconjuntos de un conjunto
+forman lo que se conoce en la teoría del orden como un retículo completo.
+</p>
+
+<p>
+Se puede pensar en un filtro como una especie de subconjunto generalizado de
+\(X\). Cada subconjunto \(S\) de \(X\) da lugar a un filtro de \(X\), llamado
+filtro principal asociado a \(S\) y denotado por \(𝓟 S\). Tenemos \(𝓟 S = 𝓟 T\)
+si y solo si \(S = T\). Sin embargo, si \(X\) es infinito, hay otros filtros
+\(F\) no principales de \(X\), que son objetos un poco más vagos. Sin embargo,
+los filtros tienen un orden escrito \(F ≤ G\), y es cierto que
+\(S ⊆ T ↔ 𝓟 S ≤ 𝓟 T\) (de hecho, lo demostraremos hoy). Para dar un ejemplo de
+un filtro que no es principal, sea \(X\) los números reales. Para cada número
+real \(x\) hay un filtro \(𝓝 x\), llamado filtro de entornos de x, con la
+propiedad de que si \(U\) es cualquier subconjunto abierto de \(ℝ\)
+que contiene a \(x\), entonces \(𝓟 {x} < 𝓝 x < 𝓟 U\). En otras palabras, es
+una especie de "entorno infinitesimal de \(x)", estrictamente más grande que
+\({x}\) pero estrictamente más pequeño que cada entorno abierto de \(x\). Este
+es un concepto que no se puede formalizar solo con conjuntos, sino que se puede
+formalizar mediante filtros.
+</p>
+</div>
+</div>
+
+<div id="outline-container-org5dddb71" class="outline-2">
+<h2 id="org5dddb71"><span class="section-number-2">2</span> La definición formal de un filtro</h2>
+<div class="outline-text-2" id="text-2">
+<p>
+Déjame motivar la definición antes de darla. Sea \(F\) un filtro. Definamos
+<code>F.sets</code> como los subconjuntos de \(X\) que contienen F; es decir, los \(S\)
+tales que \(F ≤ 𝓟 S\). Aquí hay una propiedad de los filtros que aún no he
+mencionado: si dos filtros \(F\) y \(G\) satisfacen <code>F.sets = G.sets</code> entonces
+\(F = G\); en otras palabras, un filtro está determinado por los filtros
+principales que lo contienen. Esto motiva la siguiente definición: ¿por qué no
+definir un filtro \(F\) como el conjunto de subconjuntos de \(X\) que lo
+contienen?  Necesitaremos algunos axiomas: ¿cuáles son los axiomas razonables?
+No queremos que un filtro sea más grande que \(X\) y queremos asegurarnos de que
+si \(S\) contiene a \(F\), entonces \(T\) contiene a \(F\) para cualquier \(T ⊇
+S\); finalmente, si ambos \(S\) y \(T\) contienen \(F\) entonces queremos que \(S ∩
+T\) contenenga a \(F\). ¡Esa es la definición de filtro!
+</p>
+
+<div class="org-src-container">
+<pre class="src src-lean"><span style="color: #a020f0;">structure</span> <span style="color: #0000ff;">filter</span> <span style="color: #707183;">(</span>&#945; : <span style="color: #228b22;">Type*</span><span style="color: #707183;">)</span> <span style="color: #008b8b;">:=</span>
+<span style="color: #707183;">(</span>sets                   : set <span style="color: #7388d6;">(</span>set &#945;<span style="color: #7388d6;">)</span><span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>univ_sets              : set.univ &#8712; sets<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>sets_of_superset <span style="color: #7388d6;">{</span>x y<span style="color: #7388d6;">}</span> : x &#8712; sets <span style="color: #008b8b;">&#8594;</span> x &#8838; y <span style="color: #008b8b;">&#8594;</span> y &#8712; sets<span style="color: #707183;">)</span>
+<span style="color: #707183;">(</span>inter_sets <span style="color: #7388d6;">{</span>x y<span style="color: #7388d6;">}</span>       : x &#8712; sets <span style="color: #008b8b;">&#8594;</span> y &#8712; sets <span style="color: #008b8b;">&#8594;</span> x &#8745; y &#8712; sets<span style="color: #707183;">)</span>
+</pre>
+</div>
+
+<p>
+Un filtro en X, o, como Lean le gustaría llamarlo, un término F : filter Xde tipo filter X, es una colección F.setsde subconjuntos para Xsatisfacer los tres axiomas mencionados anteriormente. Eso es. Desentrañando las definiciones, vemos que una definición sensata de F ≤ Ges eso G.sets ⊆ F.sets, porque queremos G ⊆ Sdar a entender F ⊆ S.
+</p>
+
+<p>
+Probablemente finalmente valga la pena mencionar que en Bourbaki, donde se introdujo este concepto por primera vez, tienen un axioma adicional en sus filtros: no permiten 𝓟 ∅que sea un filtro, el conjunto vacío no es un conjunto generalizado. En esta óptica, esto parece una decisión muy extraña, y este axioma adicional se eliminó en Lean. De hecho, lo bendecimos 𝓟 ∅con un nombre especial: es ⊥el filtro más pequeño único bajo nuestro ≤pedido. La (pequeña) ventaja de la convención de Bourbaki es que un ultrafiltro puede definirse literalmente como un elemento mínimo en el tipo de todos los filtros, en lugar de un elemento mínimo en el tipo de todos los filtros excepto ⊥. Esto sería análogo a no permitir un anilloRser un ideal en sí mismo, por lo que uno puede definir los ideales máximos de un anillo como los elementos máximos en el conjunto de todos los ideales del anillo. Sin embargo, esta convención para los ideales rompería enormemente la funcionalidad de los ideales, por ejemplo, la imagen de un ideal a lo largo de un homomorfismo de anillo podría dejar de ser un ideal, la suma de dos ideales podría no ser un ideal, y así sucesivamente. De manera similar, permitimos ⊥ser un filtro en Lean, porque nos permite tomar la intersección de filtros, tirar de los filtros hacia atrás y así sucesivamente; da una definición mucho más funcional.
+¿Qué hay en el taller de hoy?
+</p>
+
+<p>
+El material de esta semana está en la semana<sub>5</sub> del repositorio de GitHub de formalización de matemáticas que puede descargar localmente si lo ha leanprojectinstalado o, si tiene la paciencia de un santo y no le importa perderse algunas de las campanas y silbidos, puede probar en línea ( Parte A y Parte B ). Nota: toda esta infraestructura no apareció simplemente por arte de magia, escribí el código en el repositorio, pero no tuve nada que ver con todos estos otros trucos para facilitar el uso de los matemáticos; tenemos mucho que agradecer a personas como Patrick Massot y Bryan Gin-ge Chen para.
+</p>
+
+<p>
+En la Parte A comenzamos definiendo filtros principales y creamos una API básica para ellos. Doy un par de ejemplos de filtros también, por ejemplo, el filtro cofinite Csobre X, que es todos los subconjuntos de Xcuyo complemento es finito. Vale la pena detenerse en este filtro. Corresponde a un Xsubconjunto genérico de "cada elemento de excepto quizás un número finito" X, quizás análogo a un punto genérico en geometría algebraica. Sin embargo, no existe ningún elemento ade Xtal que 𝓟 {a} ≤ C, porque X - {a}es un subconjunto de cofinitos que no contiene a. En particular, volviendo a pensar en los filtros como subconjuntos generalizados, observamos que mientras que un conjunto generalizado está determinado por los conjuntos que lo contienen, definitivamente no está determinado por los conjuntos que contiene: de hecho,C no contiene juegos no vacíos en absoluto.
+</p>
+
+<p>
+En la Parte B pasamos a hacer algo de topología. Definimos filtros de vecindad y puntos de agrupación, y luego hablamos de una definición de compacidad que no involucra conjuntos abiertos en absoluto, sino que involucra filtros. Todavía estoy tratando de internalizar esta definición, que es la siguiente:
+1
+</p>
+
+<p>
+def is<sub>compact</sub> (S : set X) := ∀ ⦃F⦄ [ne<sub>bot</sub> F], F ≤ 𝓟 S → ∃ a  ∈ S, cluster<sub>pt</sub> a F
+</p>
+
+<p>
+En palabras, un subconjunto Sde un espacio topológico es compacto si cada subconjunto generalizado no vacío Fde Stiene un cierre que contiene un punto de S.
+</p>
+
+<p>
+Pensemos en un ejemplo aquí. Sigamos S = X. Say Ses un espacio topológico discreto infinito. Entonces, el filtro de cofinita es un filtro en el Sque no tiene ningún punto de agrupación, lo que significa que un espacio topológico discreto infinito no es compacto. Similarmente imagine Ses el intervalo semiabierto (0,1). Entonces el filtro de vecindarios de cero adentro \ mathbb {R}, restringido a este subconjunto (es decir, simplemente interseca todos los conjuntos en el filtro con (0,1)), nuevamente no tiene puntos de agrupamiento, por lo que este espacio tampoco es compacto. Finalmente consideremos a \ mathbb {R}sí mismo. Entonces, el at<sub>topfiltro</sub>, en el que pensaremos en la Parte A, consta de todos los subconjuntos Tde \ mathbb {R}para los que existe alguno r \ in \ mathbb {R}tal que (r, \ infty) \ subseteq T. Este "barrio de+ \ infty"El filtro no tiene puntos de agrupación \ mathbb {R}(tenga en cuenta que + \ inftysería un punto de agrupación, pero no es un número real). De ahí \ mathbb {R}que tampoco sea compacto. Ciertamente no hemos probado aquí que esta definición de compacto sea matemáticamente equivalente a la habitual, pero lo es , y si está interesado y ha aprendido el lenguaje de Lean, puede ir y leer la prueba usted mismo en Lean's biblioteca de matemáticas.
+</p>
+
+<p>
+El nivel del jefe esta semana es, nuevamente, que un subespacio cerrado de un espacio compacto es compacto. Pero esta vez lo probamos con filtros. Como la última vez, probamos algo un poco más general: si Xes cualquier espacio topológico, y si Ses un subconjunto compacto y Ces un subconjunto cerrado, entonces S ∩ Ces compacto. Esta es la prueba. Say Fes un subconjunto generalizado no vacío (es decir, un filtro) contenido en S ∩ C. Por compacidad de S, Ftiene un punto de clúster aen S. Pero Festá contenido en C, por lo que todos los puntos de agrupación de Fson puntos de agrupación de C, y los puntos de agrupación de Cson solo el cierre de C, que es de Cnuevo. De ahí ael elemento deS ∩ Cque buscamos. Sin cubiertas, sin subcubiertas finitas.
+</p>
+</div>
+</div>
+</div>
+<div id="postamble" class="status">
+<p class="author">José A. Alonso</p>
+
+                        <p class="date">2021-02-27 sáb 08:12</p>
+</div>
+</body>
+</html>

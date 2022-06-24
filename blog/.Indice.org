@@ -1,0 +1,6 @@
+#+TITLE: Formalización de las matemáticas
+
+Estas notas son las traducciones de los artículos publicados por Kevin Buzzard
+en su blog relacionados con cada una de las clases del curso.
+
++ [[./5-Filtros.org][5. Filtros]]
